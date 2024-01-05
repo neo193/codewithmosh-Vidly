@@ -1,10 +1,14 @@
 import React, { Component } from "react";
 import { getMovies } from "../services/fakeMovieService";
 import LikeButton from "./like";
+import Pagination from "./paging";
+import { Paginate } from "../utils/paginate";
 
 class Movies extends Component {
   state = {
     movies: getMovies(),
+    currentPage: 1,
+    recordsPerPage: 4,
   };
 
   handleDelete = (movieID) => {
@@ -30,7 +34,13 @@ class Movies extends Component {
       : `There are ${this.state.movies.length} movies in the database!`;
   };
 
+  handlePageChange = (page) => {
+    this.setState({ currentPage: page });
+  };
+
   render() {
+    const { movies: allMovies, currentPage, recordsPerPage } = this.state;
+    const movies = Paginate(allMovies, currentPage, recordsPerPage);
     return (
       <main className="container">
         <div className="col text-center">
@@ -48,7 +58,7 @@ class Movies extends Component {
             </tr>
           </thead>
           <tbody>
-            {this.state.movies.map((movie) => (
+            {movies.map((movie) => (
               <tr key={movie._id}>
                 <td>{movie.title}</td>
                 <td>{movie.genre.name}</td>
@@ -61,7 +71,7 @@ class Movies extends Component {
                     onClick={() => this.handleLike(movie)}
                   />
                 </td>
-                <td>
+                <td className="d-flex justify-content-center align-items-center">
                   <button
                     className="btn btn-danger"
                     onClick={() => this.handleDelete(movie._id)}
@@ -73,6 +83,12 @@ class Movies extends Component {
             ))}
           </tbody>
         </table>
+        <Pagination
+          total={allMovies.length}
+          onPageChange={this.handlePageChange}
+          currentPage={currentPage}
+          perPage={recordsPerPage}
+        />
       </main>
     );
   }
