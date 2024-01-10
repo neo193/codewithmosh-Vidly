@@ -34,14 +34,8 @@ class Movies extends Component {
     console.log(movies[index]);
   };
 
-  handleSorting = (sortBy) => {
-    const currentOrder = this.state.sortColumn.order;
-    if (sortBy === this.state.sortColumn.path) {
-      const newOrder = currentOrder === "asc" ? "desc" : "asc";
-      this.setState({ sortColumn: { path: sortBy, order: newOrder } });
-    } else {
-      this.setState({ sortColumn: { path: sortBy, order: "asc" } });
-    }
+  handleSorting = (sortColumn) => {
+    this.setState({ sortColumn });
   };
 
   handlePageChange = (page) => {
