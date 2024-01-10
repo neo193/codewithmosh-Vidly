@@ -1,16 +1,18 @@
 import React, { Component } from "react";
 import { getMovies } from "../services/fakeMovieService";
-import LikeButton from "./like";
 import Pagination from "./paging";
 import { Paginate } from "../utils/paginate";
 import ListGroup from "./listGroup";
 import { getGenres } from "../services/fakeGenreService";
+import MoviesTable from "./moviesTable";
+import _ from "lodash";
 
 class Movies extends Component {
   state = {
     movies: getMovies(),
     genres: getGenres(),
     selectedGenre: null,
+    sortColumn: { path: "title", order: "asc" },
     currentPage: 1,
     recordsPerPage: 4,
   };
@@ -32,12 +34,22 @@ class Movies extends Component {
     console.log(movies[index]);
   };
 
+  handleSorting = (sortBy) => {
+    const currentOrder = this.state.sortColumn.order;
+    if (sortBy === this.state.sortColumn.path) {
+      const newOrder = currentOrder === "asc" ? "desc" : "asc";
+      this.setState({ sortColumn: { path: sortBy, order: newOrder } });
+    } else {
+      this.setState({ sortColumn: { path: sortBy, order: "asc" } });
+    }
+  };
+
   handlePageChange = (page) => {
     this.setState({ currentPage: page });
   };
 
   handleGenreSelect = (genre) => {
-    this.setState({ selectedGenre: genre });
+    this.setState({ selectedGenre: genre, currentPage: 1 });
   };
 
   render() {
@@ -45,12 +57,16 @@ class Movies extends Component {
       movies: allMovies,
       currentPage,
       recordsPerPage,
+      sortColumn,
       selectedGenre,
     } = this.state;
+
     const filtered = selectedGenre
       ? allMovies.filter((m) => m.genre._id === selectedGenre._id)
       : allMovies;
-    const movies = Paginate(filtered, currentPage, recordsPerPage);
+
+    const sorted = _.orderBy(filtered, sortColumn.path, sortColumn.order);
+    const movies = Paginate(sorted, currentPage, recordsPerPage);
     return (
       <main className="container">
         <div className="col text-center">
@@ -69,43 +85,13 @@ class Movies extends Component {
             />
           </div>
           <div className="col ms-2">
-            <table className="table table-hover ms-2">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Genre</th>
-                  <th>Stock</th>
-                  <th>Rate</th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {movies.map((movie) => (
-                  <tr key={movie._id}>
-                    <td>{movie.title}</td>
-                    <td>{movie.genre.name}</td>
-                    <td>{movie.numberInStock}</td>
-                    <td>${movie.dailyRentalRate}</td>
-                    <td>
-                      <LikeButton
-                        id={movie._id}
-                        liked={movie.liked}
-                        onClick={() => this.handleLike(movie)}
-                      />
-                    </td>
-                    <td className="d-flex justify-content-center align-items-center">
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => this.handleDelete(movie._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <MoviesTable
+              movies={movies}
+              currentSort={sortColumn}
+              onLike={this.handleLike}
+              onDelete={this.handleDelete}
+              onSort={this.handleSorting}
+            />
             <Pagination
               total={filtered.length}
               onPageChange={this.handlePageChange}
